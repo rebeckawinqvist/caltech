@@ -18,10 +18,11 @@ from tulip import hybrid, spec, synth
 from tulip.abstract import prop2part, discretize
 from tulip.abstract.plot import plot_partition
 from tulip.abstract import find_controller
-from disturbance_equality_constraints import *
+from disturbance_optimization import *
 from LM import *
 from polytope import *
 from find_park_signal import *
+from cvxopt import min
 
 logging.basicConfig(level='WARNING')
 
@@ -124,6 +125,8 @@ ctrl = synth.determinize_machine_init(ctrl, {'loc': s0_part})
 
 start = s0_part
 end = disc_dynamics.ppp2ts.index(dum['loc'])
+print("start: ", start)
+print("end: ", end)
 
 u = find_controller.get_input(
     x0=np.array([x_init, y_init]),
@@ -152,16 +155,32 @@ p1 = regions[start][0]
 p2 = regions[end][0]
 
 L, M, G, M_d = createLM(sys_dyn, N, p1, p1, p2, None)
+print("G shape: ", G.shape)
 
-d = find_greatest_disturbance(L, x0_u, M, G, D, N)
+for i in range(G.shape[0]-1):
+    eps_vec = []
+    d_val_vec = []
+    for j in range(40):
+        d_val = -1 + j*0.2
+        d = np.vstack([[d_val]] for k in range(G.shape[1]))
+        eps = M[i+1,:] - L[i+1,:].dot(x0_u) + G[i+1,:].dot(d)
+        d_val_vec.append(d_val)
+        eps_vec.append(eps)
+    plt.plot(d_val_vec, eps_vec)
+plt.show()
 
-dim = [i+1 for i in range(x_0.shape[0])]
-s0_part = projection(Polytope(L, M_d), dim)
+eps, d = disturbance_optimization(L, x0_u, M, G, D, N)
 
-import matplotlib as mpl
-ax = s0_part.plot(color='red')
-ax.set_xlim(0,3)
-ax.set_ylim(0,2)
-ax.legend()
-mpl.pyplot.show()
+print("eps: ", eps)
+print("d: ", d)
+# dim = [i+1 for i in range(x_0.shape[0])]
+# s0_part = projection(Polytope(L, M_d), dim)
+#
+#
+# ax = s0_part.plot(color='red')
+# ax.set_xlim(0,3)
+# ax.set_ylim(0,2)
+# ax.legend()
+# plt.savefig('s_0.png')
+
 
