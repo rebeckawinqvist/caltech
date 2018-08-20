@@ -1,6 +1,12 @@
 import math
 
 def dijkstras(ctrl, start):
+    """
+    Dijkstra's algorithm. Code from 'www.alexhwoods.com/dijkstra'.
+    :param ctrl: controller
+    :param start: source node in controller
+    :return:
+    """
 
     # Initializing set of visited nodes
     visited = set()
@@ -41,7 +47,6 @@ def find_sequence(ctrl, des_transition, T):
     des_transition[1] - end
 
     """
-    print("in here")
     to_visit = set()
     for edge in ctrl.edges_iter(data=True):
         next_ctrl_state = edge[1]  # end state of transition in controller
@@ -106,7 +111,9 @@ def find_sequence(ctrl, des_transition, T):
             v = shortest_path[i + 1]
             park_signal = ctrl.get_edge_data(u, v)[0]['park']
             seq.append(park_signal)
+        seq.append(seq[0]) #make sure sequence is T long
         return seq
+
     div = left//len(shortest_loop)
     rest = left%len(shortest_loop)
     for i in range(div):
